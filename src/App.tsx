@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { HexBoard } from './components/HexBoard';
 import { OnlineLobby } from './components/OnlineLobby';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
+import { Contact } from './components/Contact';
+import { About } from './components/About';
+import { HowToPlay } from './components/HowToPlay';
 import { useGameStore } from './store/gameStore';
 import { useOnlineStore } from './store/onlineStore';
 import type { HexCoord, GameState, Difficulty } from './types';
@@ -9,7 +12,7 @@ import { coordEquals } from './utils/hexUtils';
 import { sendMove, resetGame as resetOnlineGame } from './services/socket';
 import { getTranslations, detectLanguage, type Language } from './utils/i18n';
 
-type AppPlayMode = 'menu' | 'local' | 'cpu' | 'cpu-select' | 'online-lobby' | 'online-game' | 'privacy';
+type AppPlayMode = 'menu' | 'local' | 'cpu' | 'cpu-select' | 'online-lobby' | 'online-game' | 'privacy' | 'contact' | 'about' | 'howtoplay';
 
 function App() {
   const [appPlayMode, setAppPlayMode] = useState<AppPlayMode>('menu');
@@ -185,12 +188,32 @@ function App() {
           {t.tagline}
         </p>
 
-        <button
-          onClick={() => setAppPlayMode('privacy')}
-          className="mt-4 text-gray-500 text-xs underline hover:text-gray-400"
-        >
-          {language === 'ja' ? 'プライバシーポリシー' : 'Privacy Policy'}
-        </button>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <button
+            onClick={() => setAppPlayMode('howtoplay')}
+            className="text-gray-400 text-xs underline hover:text-gray-300"
+          >
+            {language === 'ja' ? '遊び方' : 'How to Play'}
+          </button>
+          <button
+            onClick={() => setAppPlayMode('about')}
+            className="text-gray-400 text-xs underline hover:text-gray-300"
+          >
+            {language === 'ja' ? 'このゲームについて' : 'About'}
+          </button>
+          <button
+            onClick={() => setAppPlayMode('contact')}
+            className="text-gray-400 text-xs underline hover:text-gray-300"
+          >
+            {language === 'ja' ? 'お問い合わせ' : 'Contact'}
+          </button>
+          <button
+            onClick={() => setAppPlayMode('privacy')}
+            className="text-gray-400 text-xs underline hover:text-gray-300"
+          >
+            {language === 'ja' ? 'プライバシーポリシー' : 'Privacy Policy'}
+          </button>
+        </div>
       </div>
     );
   }
@@ -199,6 +222,36 @@ function App() {
   if (appPlayMode === 'privacy') {
     return (
       <PrivacyPolicy
+        onBack={() => setAppPlayMode('menu')}
+        language={language}
+      />
+    );
+  }
+
+  // お問い合わせ画面
+  if (appPlayMode === 'contact') {
+    return (
+      <Contact
+        onBack={() => setAppPlayMode('menu')}
+        language={language}
+      />
+    );
+  }
+
+  // About画面
+  if (appPlayMode === 'about') {
+    return (
+      <About
+        onBack={() => setAppPlayMode('menu')}
+        language={language}
+      />
+    );
+  }
+
+  // 遊び方画面
+  if (appPlayMode === 'howtoplay') {
+    return (
+      <HowToPlay
         onBack={() => setAppPlayMode('menu')}
         language={language}
       />
