@@ -22,7 +22,6 @@ function App() {
     selectedPieceIds,
     currentTurn,
     gameMode,
-    playMode,
     difficulty,
     winner,
     selectPiece,
