@@ -307,6 +307,7 @@ function App() {
       <OnlineLobby
         onGameStart={handleOnlineGameStart}
         onBackToLocal={handleBackToMenu}
+        language={language}
       />
     );
   }

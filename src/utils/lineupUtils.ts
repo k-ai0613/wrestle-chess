@@ -29,8 +29,8 @@ function countInDirection(
   return count;
 }
 
-// 4目並べの勝利判定
-// 指定した色のコマが4つ以上連続しているかチェック
+// 5目並べの勝利判定
+// 指定した色のコマが5つ以上連続しているかチェック
 export function checkLineup(pieces: Piece[], color: PieceColor): boolean {
   const colorPieces = pieces.filter(p => p.color === color);
 
@@ -49,9 +49,9 @@ export function checkLineup(pieces: Piece[], color: PieceColor): boolean {
       const forwardCount = countInDirection(piece.position, dir, color, pieces);
       const backwardCount = countInDirection(piece.position, reverseDir, color, pieces);
 
-      // 自分自身を含めて4つ以上なら勝利
+      // 自分自身を含めて5つ以上なら勝利
       const totalCount = 1 + forwardCount + backwardCount;
-      if (totalCount >= 4) {
+      if (totalCount >= 5) {
         return true;
       }
     }
@@ -60,7 +60,7 @@ export function checkLineup(pieces: Piece[], color: PieceColor): boolean {
   return false;
 }
 
-// 勝者を判定（4目並べモード用）
+// 勝者を判定（5目並べモード用）
 export function getLineupWinner(pieces: Piece[]): PieceColor | null {
   if (checkLineup(pieces, 'black')) {
     return 'black';

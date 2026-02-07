@@ -1,3 +1,5 @@
+import { AdBanner } from './AdBanner';
+
 interface HowToPlayProps {
   onBack: () => void;
   language: 'ja' | 'en';
@@ -12,6 +14,8 @@ export function HowToPlay({ onBack, language }: HowToPlayProps) {
         <h1 className="text-2xl font-bold mb-6">
           {isJa ? '遊び方' : 'How to Play'}
         </h1>
+
+        <AdBanner slot="7533049587" />
 
         <div className="space-y-6 text-gray-300 text-sm leading-relaxed">
           {isJa ? (
@@ -49,7 +53,7 @@ export function HowToPlay({ onBack, language }: HowToPlayProps) {
                 <div className="space-y-3">
                   <div>
                     <h3 className="font-bold text-blue-400">押し出しモード</h3>
-                    <p>相手の駒を盤外に押し出して、残り1個以下にすれば勝利！</p>
+                    <p>相手の駒を6個以上盤外に押し出せば勝利！</p>
                   </div>
                   <div>
                     <h3 className="font-bold text-blue-400">整列モード</h3>
@@ -103,7 +107,7 @@ export function HowToPlay({ onBack, language }: HowToPlayProps) {
                 <div className="space-y-3">
                   <div>
                     <h3 className="font-bold text-blue-400">Push Out Mode</h3>
-                    <p>Push opponent's pieces off the board until they have 1 or fewer pieces!</p>
+                    <p>Push 6 or more of your opponent's pieces off the board to win!</p>
                   </div>
                   <div>
                     <h3 className="font-bold text-blue-400">Line Up Mode</h3>

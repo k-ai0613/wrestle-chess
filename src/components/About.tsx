@@ -1,3 +1,5 @@
+import { AdBanner } from './AdBanner';
+
 interface AboutProps {
   onBack: () => void;
   language: 'ja' | 'en';
@@ -12,6 +14,8 @@ export function About({ onBack, language }: AboutProps) {
         <h1 className="text-2xl font-bold mb-6">
           {isJa ? 'Wrestle Chessについて' : 'About Wrestle Chess'}
         </h1>
+
+        <AdBanner slot="7533049587" />
 
         <div className="space-y-6 text-gray-300 text-sm leading-relaxed">
           {isJa ? (

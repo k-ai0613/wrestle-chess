@@ -38,12 +38,9 @@ export function checkLinePush(
   };
 
   const myColor = startPiece.color;
+  const opponentColor: PieceColor = myColor === 'black' ? 'white' : 'black';
 
-  // 押す方向に沿って全てのコマを収集
-  const piecesInLine: Piece[] = [];
-  let currentPos = startPiece.position;
-
-  // まず、押す方向の逆側にある自分のコマも含める（連続している場合）
+  // 1. 押す方向の逆側にある連続した自分のコマを収集
   const reverseDir = { q: -direction.q, r: -direction.r };
   let backPos = addCoords(startPiece.position, reverseDir);
   const backPieces: Piece[] = [];
@@ -58,47 +55,81 @@ export function checkLinePush(
     }
   }
 
-  // 後ろの自分のコマを追加
-  piecesInLine.push(...backPieces);
+  // 自分のコマ列: 後方 + クリックしたコマ
+  const myPieces: Piece[] = [...backPieces, startPiece];
 
-  // クリックしたコマを追加
-  piecesInLine.push(startPiece);
-
-  // 押す方向にあるコマを全て収集
-  currentPos = addCoords(startPiece.position, direction);
-
+  // 2. 押す方向の前方にある連続した自分のコマも追加
+  let forwardPos = addCoords(startPiece.position, direction);
   while (true) {
-    const piece = getPieceAt(currentPos, allPieces);
-    if (piece) {
-      piecesInLine.push(piece);
-      currentPos = addCoords(currentPos, direction);
+    const piece = getPieceAt(forwardPos, allPieces);
+    if (piece && piece.color === myColor) {
+      myPieces.push(piece);
+      forwardPos = addCoords(forwardPos, direction);
     } else {
       break;
     }
   }
 
-  // 列の先頭（押す方向の最前列）のコマの次の位置をチェック
-  const frontPiece = piecesInLine[piecesInLine.length - 1];
-  const frontNextPos = addCoords(frontPiece.position, direction);
-
-  // 先頭の次が盤外なら、先頭のコマが押し出される
-  if (!isOnBoard(frontNextPos)) {
-    result.canPush = true;
-    result.pushedOutPieces.push(frontPiece);
-
-    // 押し出されるコマ以外は1マス前進
-    for (let i = 0; i < piecesInLine.length - 1; i++) {
-      const piece = piecesInLine[i];
-      const newPos = addCoords(piece.position, direction);
-      result.newPositions.set(piece.id, newPos);
+  // 3. 前方の自分のコマの先にある連続した相手のコマを収集
+  const opponentPieces: Piece[] = [];
+  let checkPos = forwardPos; // myPiecesの次の位置から開始
+  while (true) {
+    const piece = getPieceAt(checkPos, allPieces);
+    if (piece && piece.color === opponentColor) {
+      opponentPieces.push(piece);
+      checkPos = addCoords(checkPos, direction);
+    } else {
+      break;
     }
+  }
+
+  const myCount = myPieces.length;
+  const opponentCount = opponentPieces.length;
+
+  if (opponentCount === 0) {
+    // 相手のコマがない場合: 前方が空きマスなら移動可能
+    const frontNextPos = forwardPos; // 自分のコマ列の次の位置
+    if (isOnBoard(frontNextPos)) {
+      result.canPush = true;
+      for (const piece of myPieces) {
+        const newPos = addCoords(piece.position, direction);
+        result.newPositions.set(piece.id, newPos);
+      }
+    }
+    // 前方が盤外の場合は移動不可（自分のコマを押し出すことはない）
   } else {
-    // 先頭の次が盤内で空いている場合、全員が1マス前進
-    result.canPush = true;
-    for (const piece of piecesInLine) {
-      const newPos = addCoords(piece.position, direction);
-      result.newPositions.set(piece.id, newPos);
+    // 相手のコマがある場合: 数の優位性チェック
+    if (myCount <= opponentCount) {
+      // 自分の数が相手以下なら押せない
+      return result;
     }
+
+    // 相手列の先頭の次の位置をチェック
+    const beyondOpponent = checkPos; // 相手コマ列の次の位置
+    const allPiecesInLine = [...myPieces, ...opponentPieces];
+
+    if (!isOnBoard(beyondOpponent)) {
+      // 相手列の先頭が盤外に押し出される
+      result.canPush = true;
+      const lastOpponent = opponentPieces[opponentPieces.length - 1];
+      result.pushedOutPieces.push(lastOpponent);
+
+      // 押し出されるコマ以外は1マス前進
+      for (const piece of allPiecesInLine) {
+        if (piece.id !== lastOpponent.id) {
+          const newPos = addCoords(piece.position, direction);
+          result.newPositions.set(piece.id, newPos);
+        }
+      }
+    } else if (!getPieceAt(beyondOpponent, allPieces)) {
+      // 相手列の先に空きマスがある場合: 全員1マス前進
+      result.canPush = true;
+      for (const piece of allPiecesInLine) {
+        const newPos = addCoords(piece.position, direction);
+        result.newPositions.set(piece.id, newPos);
+      }
+    }
+    // 相手列の先にさらにコマがある場合は押せない
   }
 
   return result;

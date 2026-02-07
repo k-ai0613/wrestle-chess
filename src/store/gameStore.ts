@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { GameState, Piece, HexCoord, GameMode, PieceColor, PlayMode, Difficulty } from '../types';
 import { coordEquals, hexDistance } from '../utils/hexUtils';
-import { checkLinePush, getPushMoveCoords, executePush } from '../utils/pushUtils';
+import { checkLinePush, getPushMoveCoords, executePush, type PushResult } from '../utils/pushUtils';
 import { getLineupWinner } from '../utils/lineupUtils';
 import { getBestMove } from '../utils/aiUtils';
 
@@ -18,6 +18,46 @@ function isValidDirection(direction: HexCoord): boolean {
     Math.abs(direction.q + direction.r) <= 1 &&
     (direction.q !== 0 || direction.r !== 0)
   );
+}
+
+// プッシュ実行＋勝利判定の共通ロジック
+function executeAndJudge(
+  pushResult: PushResult,
+  pieces: Piece[],
+  blackPiecesOut: number,
+  whitePiecesOut: number,
+  gameMode: GameMode
+): {
+  newPieces: Piece[];
+  newBlackPiecesOut: number;
+  newWhitePiecesOut: number;
+  newWinner: PieceColor | null;
+} {
+  const result = executePush(pushResult, pieces);
+  const newPieces = result.pieces;
+  let newBlackPiecesOut = blackPiecesOut;
+  let newWhitePiecesOut = whitePiecesOut;
+  let newWinner: PieceColor | null = null;
+
+  for (const pushedOut of pushResult.pushedOutPieces) {
+    if (pushedOut.color === 'black') {
+      newBlackPiecesOut++;
+    } else {
+      newWhitePiecesOut++;
+    }
+  }
+
+  if (gameMode === 'wrestle') {
+    if (newBlackPiecesOut >= 6) {
+      newWinner = 'white';
+    } else if (newWhitePiecesOut >= 6) {
+      newWinner = 'black';
+    }
+  } else if (gameMode === 'lineup') {
+    newWinner = getLineupWinner(newPieces);
+  }
+
+  return { newPieces, newBlackPiecesOut, newWhitePiecesOut, newWinner };
 }
 
 // 初期配置を生成
@@ -136,35 +176,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const pushResult = checkLinePush(selectedPiece, direction, pieces);
     if (!pushResult.canPush) return;
 
-    const result = executePush(pushResult, pieces);
-    let newPieces = result.pieces;
-    let newBlackPiecesOut = blackPiecesOut;
-    let newWhitePiecesOut = whitePiecesOut;
-    let newWinner: PieceColor | null = null;
-
-    for (const pushedOut of pushResult.pushedOutPieces) {
-      if (pushedOut.color === 'black') {
-        newBlackPiecesOut++;
-      } else {
-        newWhitePiecesOut++;
-      }
-    }
-
-    if (gameMode === 'wrestle') {
-      if (newBlackPiecesOut >= 6) {
-        newWinner = 'white';
-      } else if (newWhitePiecesOut >= 6) {
-        newWinner = 'black';
-      }
-    } else if (gameMode === 'lineup') {
-      newWinner = getLineupWinner(newPieces);
-    }
-
-    const nextTurn = currentTurn === 'black' ? 'white' : 'black';
+    const { newPieces, newBlackPiecesOut, newWhitePiecesOut, newWinner } =
+      executeAndJudge(pushResult, pieces, blackPiecesOut, whitePiecesOut, gameMode);
 
     set({
       pieces: newPieces,
-      currentTurn: nextTurn,
+      currentTurn: currentTurn === 'black' ? 'white' : 'black',
       selectedPieceIds: [],
       blackPiecesOut: newBlackPiecesOut,
       whitePiecesOut: newWhitePiecesOut,
@@ -187,29 +204,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const pushResult = checkLinePush(piece, move.direction, pieces);
     if (!pushResult.canPush) return;
 
-    const result = executePush(pushResult, pieces);
-    let newPieces = result.pieces;
-    let newBlackPiecesOut = blackPiecesOut;
-    let newWhitePiecesOut = whitePiecesOut;
-    let newWinner: PieceColor | null = null;
-
-    for (const pushedOut of pushResult.pushedOutPieces) {
-      if (pushedOut.color === 'black') {
-        newBlackPiecesOut++;
-      } else {
-        newWhitePiecesOut++;
-      }
-    }
-
-    if (gameMode === 'wrestle') {
-      if (newBlackPiecesOut >= 6) {
-        newWinner = 'white';
-      } else if (newWhitePiecesOut >= 6) {
-        newWinner = 'black';
-      }
-    } else if (gameMode === 'lineup') {
-      newWinner = getLineupWinner(newPieces);
-    }
+    const { newPieces, newBlackPiecesOut, newWhitePiecesOut, newWinner } =
+      executeAndJudge(pushResult, pieces, blackPiecesOut, whitePiecesOut, gameMode);
 
     set({
       pieces: newPieces,
